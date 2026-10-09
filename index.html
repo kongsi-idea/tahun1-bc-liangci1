@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>量词南瓜丰收季 · 一年级华文</title>
+  <meta name="description" content="一年级华文·量词：把双、朵、只、颗、片、群送到南瓜上，收割南瓜。构想：陈晓琪老师。">
+  <link rel="stylesheet" href="styles.css">
+<script src="https://kongsi-idea.vercel.app/data/track-use.js" data-slug="tahun1-bc-liangci1" defer></script>
+</head>
+<body>
+  <!-- 共用的南瓜渐层，所有南瓜都引用它 -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <radialGradient id="pkG" cx="34%" cy="26%" r="80%">
+        <stop offset="0" stop-color="#F8B069"/><stop offset=".5" stop-color="#E8803A"/><stop offset="1" stop-color="#B24D1E"/>
+      </radialGradient>
+      <radialGradient id="pkG2" cx="40%" cy="30%" r="75%">
+        <stop offset="0" stop-color="#F29A52"/><stop offset=".6" stop-color="#DD7230"/><stop offset="1" stop-color="#A94519"/>
+      </radialGradient>
+      <linearGradient id="stemG" x1="0" x2="1"><stop offset="0" stop-color="#8A8F45"/><stop offset="1" stop-color="#5E6B2C"/></linearGradient>
+      <linearGradient id="leafG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9CCB7C"/><stop offset="1" stop-color="#5E9A55"/></linearGradient>
+    </defs>
+  </svg>
+  <div class="paper" aria-hidden="true"></div>
+
+  <div id="app">
+    <!-- ── 首页 ── -->
+    <section id="home" class="screen is-active" aria-label="首页">
+      <div class="home-inner">
+        <header class="sign">
+          <h1>量词南瓜丰收季</h1>
+          <p>一年级华文 · 双　朵　只　颗　片　群</p>
+        </header>
+        <div class="home-hero" id="homeHero" aria-hidden="true"></div>
+        <div class="home-btns">
+          <button class="big-btn lv1" data-start="1"><b>关卡一 · 小南瓜园</b><span>看图选量词 · 30 粒南瓜</span></button>
+          <button class="big-btn lv2" data-start="2"><b>关卡二 · 大南瓜王国</b><span>句子里的量词 · 20 粒南瓜</span></button>
+          <button class="big-btn guide" id="openGuide"><b>📖 量词宝典</b><span>看看六个量词怎么用</span></button>
+        </div>
+        <p class="credit">构想：陈晓琪老师</p>
+      </div>
+    </section>
+
+    <!-- ── 游戏 ── -->
+    <section id="play" class="screen" aria-label="收割南瓜">
+      <header class="bar">
+        <button class="icon-btn" id="btnHome" aria-label="回首页">🏠</button>
+        <div class="lv-badge" id="lvBadge">关卡一</div>
+        <div class="prog" aria-live="polite">
+          <div class="prog-top"><span id="progLabel">收割进度</span><b id="progText">0 / 30</b></div>
+          <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+        </div>
+        <div class="stars" id="starBox">⭐ <b id="starCount">0</b></div>
+        <button class="icon-btn" id="btnPinyin" aria-pressed="false" aria-label="显示拼音">拼</button>
+        <button class="icon-btn" id="btnSound" aria-pressed="true" aria-label="声音">🔊</button>
+        <button class="icon-btn" id="btnGuide" aria-label="量词宝典">📖</button>
+      </header>
+
+      <main class="field">
+        <div class="hills" aria-hidden="true"></div>
+        <div id="stage"></div>
+        <div id="toast" role="status" aria-live="polite"></div>
+      </main>
+
+      <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+      <footer class="dock">
+        <div id="tray" class="tray" aria-label="六个量词"></div>
+        <div id="basket" class="basket" aria-label="丰收篮"><span class="bk"></span><b id="basketCount">0</b></div>
+      </footer>
+    </section>
+
+    <!-- ── 结算 ── -->
+    <section id="result" class="screen" aria-label="结算">
+      <div class="result-card">
+        <div class="result-pumpkins" id="resultPumpkins" aria-hidden="true"></div>
+        <h2 id="resTitle">丰收啦！</h2>
+        <p id="resMsg"></p>
+        <div class="res-stars"><span>⭐</span><b id="resStars">0</b></div>
+        <div class="res-bars" id="resBars"></div>
+        <p class="res-weak" id="resWeak"></p>
+        <div class="res-btns">
+          <button class="big-btn" id="resNext"></button>
+          <button class="small-btn" id="resAgain">再玩一次</button>
+          <button class="small-btn" id="resHome">回首页</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 量词宝典 -->
+  <div id="guideModal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-label="量词宝典">
+      <button class="icon-btn modal-x" id="closeGuide" aria-label="关闭">✕</button>
+      <h3>📖 量词宝典</h3>
+      <div class="guide-grid" id="guideGrid"></div>
+      <button class="big-btn" id="closeGuide2"><b>我明白啦，去收南瓜！</b></button>
+    </div>
+  </div>
+
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <script src="data.js"></script>
+  <script src="pinyin-data.js"></script>
+  <script src="audio/manifest.js" onerror="window.VOICE_CLIPS={}"></script>
+  <script src="app.js"></script>
+</body>
+</html>
