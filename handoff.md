@@ -1,6 +1,6 @@
 # tahun1-bc-liangci1（量词南瓜丰收季）handoff
 
-- 状态：开发完成，verify 已验收并修掉 3 个小屏排版问题（844×390 南瓜图被标签盖住、关卡二句子卡溢出），**待老师本机实测（关口②）**，尚未建 repo／部署／上架。
+- 状态：已部署 https://tahun1-bc-liangci1.vercel.app（2026-10-09，guard 授权名单已含 tahun[1-6]-*），GitHub Actions 自动部署已接；Hub 已上架 v1.0。
 - 来源：陈晓琪老师的单文件构想（南瓜丰收＋6 量词）。老师 2026-10-09 确认：另立新工具、视觉选 A 绘本南瓜田、拼音默认隐藏可点开。
 - 与旧工具 `tahun1-bc-liangci`（量词大冒险，像素闯关）并存，不互相取代。
 - 玩法：关卡一 30 题（6 粒南瓜一屏，拖或点选量词卡）；关卡二 20 句（一句一屏）。乱序出题；第一次答错只给观察提示，第二次给完整提示，第三次起量词卡发光；一次答错的题回炉一轮；结算显示各量词答对率。
@@ -8,6 +8,6 @@
 - 美术：生图额度用完（OpenAI key 无余额），南瓜与背景是内联 SVG／CSS；动物物件用本地 Twemoji（assets/emoji/）。若之后有额度，可把南瓜换成 gpt-image 生图。
 - 朗读：edge-tts 预录（晓晓 -8%），`python3 gen-voice.py`（需先 `python3 -m http.server 8941`）。改题库或提示句后要重跑。
 - 测试：`python3 test-e2e.py`（VW/VH 可改视口）。
-- 下一步：verify 实测 → 老师本机试玩 → `git init`＋`gh repo create kongsi-idea/tahun1-bc-liangci1`＋vercel link（--scope kongsi-idea）→ 老师执行部署 → Hub 上架（署名：陈晓琪老师构想）→ `npm run check -- tahun1-bc-liangci1`。
 - 2026-10-09 老师实测通过、说可以发布；补做：DSKP 5.3.1 已对官方华文一年级 PDF 第 42 页（「认识量词和近似字，多音字」）；题目词语拼音已做（`gen-pinyin.py`，「拼」按钮开关）。
 - 最后更新：2026-10-09
+- 下一步：无；等课堂反馈。改版时按 agents.md「改版同步五步」同步 Hub。
