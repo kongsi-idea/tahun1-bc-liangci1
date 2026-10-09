@@ -1,5 +1,4 @@
 # tahun1-bc-liangci1（量词南瓜丰收季）handoff
-
 - 状态：已部署 https://tahun1-bc-liangci1.vercel.app（2026-10-09，guard 授权名单已含 tahun[1-6]-*），GitHub Actions 自动部署已接；Hub 已上架 v1.0。
 - 来源：陈晓琪老师的单文件构想（南瓜丰收＋6 量词）。老师 2026-10-09 确认：另立新工具、视觉选 A 绘本南瓜田、拼音默认隐藏可点开。
 - 与旧工具 `tahun1-bc-liangci`（量词大冒险，像素闯关）并存，不互相取代。
@@ -9,5 +8,6 @@
 - 朗读：edge-tts 预录（晓晓 -8%），`python3 gen-voice.py`（需先 `python3 -m http.server 8941`）。改题库或提示句后要重跑。
 - 测试：`python3 test-e2e.py`（VW/VH 可改视口）。
 - 2026-10-09 老师实测通过、说可以发布；补做：DSKP 5.3.1 已对官方华文一年级 PDF 第 42 页（「认识量词和近似字，多音字」）；题目词语拼音已做（`gen-pinyin.py`，「拼」按钮开关）。
-- 最后更新：2026-10-09
-- 下一步：无；等课堂反馈。改版时按 agents.md「改版同步五步」同步 Hub。
+- 署名：Hub 作者只写「陈晓琪老师」（全局署名规则见 ../agents.md）。
+- 下一步：无；等课堂反馈。改版时按 ../agents.md「改版同步五步」同步 Hub。
+- 最后更新：2026-10-09，Claude Code；Git：✅ 已推（工具 repo、kongsi-idea、teaching-tools 均已 push，自动部署与 Hub 部署已验证）
