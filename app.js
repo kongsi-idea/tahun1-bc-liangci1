@@ -85,9 +85,97 @@ const sfx = {
   no: () => tone([220, 175], 0.13, 'triangle', 0.16),
   win: () => tone([523, 659, 784, 1047, 1319], 0.11, 'triangle', 0.2),
 };
+/* 语音包（http/https 下）：audio/pack.mp3 把全部固定短句接成一个，只下载一次，用 Web Audio 按目录 VOICE_PACK 切出那一句。
+   没载完、解码失败、AudioContext 还没被点击唤醒、或 file:// 打开时，调用方照旧逐档用 <audio> 播 audio/<key>.mp3。
+   VP.play(key, single)：single() 是原本逐档播放的函数（回传 Promise）；VP.stop()：停掉正在播的这一句。 */
+const VP = (function () {
+  var pack = window.VOICE_PACK, AC = window.AudioContext || window.webkitAudioContext;
+  var actx = null, buf = null, bytes = null, cur = null, token = 0;
+  var ok = !!(pack && AC && /^https?:/.test(location.protocol));
+  if (ok) {
+    try { actx = new AC({ sampleRate: 24000 }); } catch (e) { try { actx = new AC(); } catch (e2) { ok = false; } }
+  }
+  /* iPhone/iPad 的静音开关会把 Web Audio 静音（<audio> 不会）。把音频会话切成 playback：
+     新 Safari 用 navigator.audioSession；旧 iOS 在第一次点击里播一段循环的无声 <audio>。桌面浏览器两者都不碰。 */
+  var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var sessionDone = false, keepAlive = null;
+  function setPlayback() { try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} }
+  setPlayback();
+  function wake() {
+    if (!sessionDone) {
+      sessionDone = true;
+      setPlayback();
+      if (isIOS && !navigator.audioSession) {
+        try {
+          keepAlive = new Audio('data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==');
+          keepAlive.loop = true; keepAlive.setAttribute('playsinline', '');
+          var kp = keepAlive.play(); if (kp && kp.catch) kp.catch(function () {});
+        } catch (e) {}
+      }
+    }
+    if (actx && actx.state !== 'running') { try { var r = actx.resume(); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+  }
+  if (ok) ['pointerdown', 'touchend', 'click', 'keydown'].forEach(function (ev) { document.addEventListener(ev, wake, true); });
+  function decode() {
+    if (!bytes || buf || !actx) return;
+    var ab = bytes; bytes = null;
+    var good = function (b) { buf = b; }, bad = function () { ok = false; };
+    try { var r = actx.decodeAudioData(ab, good, bad); if (r && r.then) r.then(good, bad); } catch (e) { bad(); }
+  }
+  var started = false;
+  function load() {
+    if (!ok || started) return;
+    started = true;
+    fetch('audio/pack.mp3', { priority: 'low' }).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); })
+      .then(function (ab) { bytes = ab; decode(); })
+      .catch(function () { ok = false; });
+  }
+  /* 什么时候取包：第一句话先照旧走单档（不跟 3MB 的包抢带宽、不比原来晚），那一句播完（或 3 秒后）才开始取；
+     一直没人触发朗读的话，页面载完 15 秒后也取，反正总共只一次请求。%LOADTRIGGER% */
+  function afterFirst(p) { var go = function () { setTimeout(load, 200); }; if (p && p.then) p.then(go, go); setTimeout(load, 3000); }
+  if (ok) window.addEventListener('load', function () { setTimeout(load, 15000); });
+  function ready(k) { return ok && buf && actx && actx.state === 'running' && pack[k]; }
+  function playPack(k) {
+    return new Promise(function (resolve) {
+      var r = pack[k], src = actx.createBufferSource();
+      src.buffer = buf; src.connect(actx.destination);
+      src.onended = function () { if (cur === src) cur = null; resolve(); };
+      cur = src;
+      try { src.start(0, r[0], r[1]); } catch (e) { cur = null; resolve(); }
+    });
+  }
+  return {
+    play: function (k, single) {
+      if (ready(k)) return playPack(k);
+      /* 包已解码、只是 AudioContext 刚被这一下点击叫醒还没转成 running：最多等 0.4 秒，免得第一句掉回单档（离线时单档不在缓存里） */
+      if (ok && buf && actx && pack[k] && actx.state !== 'running') {
+        var my = token;
+        return new Promise(function (resolve) {
+          var done = false;
+          var go = function () {
+            if (done) return; done = true;
+            if (my !== token) return resolve();
+            (ready(k) ? playPack(k) : single()).then(resolve);
+          };
+          setTimeout(go, 400);
+          try { var r = actx.resume(); if (r && r.then) r.then(go, go); } catch (e) { go(); }
+        });
+      }
+      var p = single();
+      if (ok && !started) afterFirst(p);
+      return p;
+    },
+    stop: function () {
+      token++;
+      if (cur) { var s = cur; cur = null; try { s.onended = null; s.stop(); } catch (e) {} }
+    },
+    has: function (k) { return !!(ok && pack && pack[k]); }
+  };
+})();
 let curAudio = null;
 const NOVELTY = /Eddy|Grandma|Grandpa|Flo\b|Reed|Rocko|Sandy|Shelley|Bahh|Bells|Boing|Bubbles|Cellos|Wobble|Zarvox|Trinoids|Whisper|Albert|Fred|Jester|Organ|Superstar|Bad News|Good News|Hysterical|Junior|Kathy|Ralph/i;
 function stopSpeak() {
+  VP.stop();
   if (curAudio) { curAudio.pause(); curAudio = null; }
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
@@ -97,8 +185,11 @@ function speak(raw) {
   stopSpeak();
   const key = fnv(text);
   if (window.VOICE_CLIPS && window.VOICE_CLIPS[key]) {
-    curAudio = new Audio(`audio/${key}.mp3`);
-    curAudio.play().catch(() => {});
+    VP.play(key, () => new Promise(res => {
+      const a = curAudio = new Audio(`audio/${key}.mp3`);
+      a.onended = a.onerror = () => res();
+      a.play().catch(() => res());
+    }));
     return;
   }
   if (!('speechSynthesis' in window)) return;   // 没有预录音档才退回浏览器朗读

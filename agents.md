@@ -22,3 +22,10 @@
 
 ## 署名
 Hub 作者只写「陈晓琪老师」，不加「卢老师」「构想」（老师 2026-10-09 定，全局规则在 `../agents.md`）。
+
+## 语音包（2026-10-23）
+- 起因：Vercel 免费团队请求数用满；每句语音一个 mp3，每台新设备玩下来要多请求几十到上百次。
+- 现在：http(s) 下 `app.js` 的 `VP` 在**第一句播完后**才取一次 `audio/pack.mp3`（第一句照旧走单档，不跟 3MB 的包抢带宽），Web Audio 按 `audio/pack.js` 的 `[开始秒, 长度秒]` 切句播放。pack 没载完／AudioContext 未被点击唤醒（最多等 0.4 秒）／解码失败／file:// 时，照旧用 `<audio>` 逐档播 `audio/<key>.mp3`。**单档 mp3 必须留在仓库**（后备）。
+- 新句子停掉上一句，不叠音。iOS 静音开关：`navigator.audioSession.type='playback'`，旧 iOS 播循环无声 `<audio>`。
+- 改了题库或提示句：`python3 gen-voice.py` → `python3 pack-voice.py`（需 ffmpeg）。漏跑 `pack-voice.py` 的话新句子走单档（仍有声，只是多一次请求）。
+- 本工具没有 service worker，所以没有离线清单要改。
